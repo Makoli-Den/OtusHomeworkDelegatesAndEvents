@@ -1,4 +1,4 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
 
 namespace DelegatesAndEvents
 {
@@ -11,7 +11,7 @@ namespace DelegatesAndEvents
             ShowMainMenu();
         }
 
-        static void ShowMainMenu()
+        private static void ShowMainMenu()
         {
             ConsoleMenu menu = new ConsoleMenu("Меню настроек")
             {
@@ -33,19 +33,8 @@ namespace DelegatesAndEvents
             };
             menu.DisplayMenu();
         }
-
-        public static void SearchFilesByFile()
-        {
-            string path = BaseConsoleActions.AskForValidDirectoryPath();
-
-            FileSearcher fileSearcher = new FileSearcher();
-            fileSearcher.OnFileFound += OnFileFound;
-            fileSearcher.Search(path);
-
-            BaseConsoleActions.PressAnyToContinue(ShowMainMenu);
-        }
         
-        public static void ShowExplorer(string path = "")
+        private static void ShowExplorer(string path = "")
         {
             string label = string.IsNullOrEmpty(path) ? "Проводник" : $"Проводник: {path}";
 
@@ -56,6 +45,7 @@ namespace DelegatesAndEvents
 
             if (string.IsNullOrEmpty(path))
             {
+                menu.MenuItems.Add(new ConsoleMenuItem("Назад", 0, (s, e) => { ShowMainMenu(); }));
                 explorer.SearchDrives();
             }
             else
@@ -91,38 +81,71 @@ namespace DelegatesAndEvents
 
         private static void OnExplorerItemFound(object sender, ExplorerArgs explorerArgs, ConsoleMenu menu)
         {
+            // Cancelation logic
+            if (explorerArgs.Name.Contains("specific_file_name"))
+            {
+                explorerArgs.Cancel = true;
+            }
+
             if (explorerArgs.IsDrive || explorerArgs.IsFolder)
             {
                 menu.MenuItems.Add(new ConsoleMenuItem(explorerArgs.Name, 0, (s, e) => { ShowExplorer(explorerArgs.FullPath); }));
             }
             else
             {
-                menu.MenuItems.Add(new ConsoleMenuItem(explorerArgs.Name, 0, (s, e) => { ShowExplorer(explorerArgs.FullPath); }));
+                menu.MenuItems.Add(new ConsoleMenuItem(explorerArgs.Name, 0, (s, e) => { OpenFile(explorerArgs.FullPath); }));
             }
         }
 
-        public static void CallIEnumerableGetMin(List<TestDataClass> list)
+        private static void SearchFilesByFile()
+        {
+            string path = BaseConsoleActions.AskForValidDirectoryPath();
+
+            FileSearcher fileSearcher = new FileSearcher();
+            fileSearcher.OnFileFound += OnFileFound;
+            fileSearcher.Search(path);
+
+            BaseConsoleActions.PressAnyToContinue(ShowMainMenu);
+        }
+
+        private static void OpenFile(string filePath)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при открытии файла: {ex.Message}");
+            }
+        }
+
+        private static void CallIEnumerableGetMin(List<TestDataClass> list)
         {
             var result = list.GetMin(item => item.Value);
             BaseConsoleActions.DisplayMessageWithSpacing($"Наимешьшее: {result.Value}");
             BaseConsoleActions.PressAnyToContinue(ShowMainMenu);
         }
 
-        public static void CallIEnumerableGetMax(List<TestDataClass> list)
+        private static void CallIEnumerableGetMax(List<TestDataClass> list)
         {
             var result = list.GetMax(item => item.Value);
             BaseConsoleActions.DisplayMessageWithSpacing($"Наибольшее: {result.Value}");
             BaseConsoleActions.PressAnyToContinue(ShowMainMenu);
         }
 
-        public static void CallIEnumerableGetAverage(List<TestDataClass> list)
+        private static void CallIEnumerableGetAverage(List<TestDataClass> list)
         {
             var result = list.GetAverage(item => item.Value);
             BaseConsoleActions.DisplayMessageWithSpacing($"Среднее значение: {result}");
             BaseConsoleActions.PressAnyToContinue(ShowMainMenu);
         }
 
-        public static void BaseIEnumerableAction(Action<List<TestDataClass>> invokeAction)
+        private static void BaseIEnumerableAction(Action<List<TestDataClass>> invokeAction)
         {
             int count = BaseConsoleActions.AskForValidIntegerInput("Элементов в коллекции (больше нуля): ", value => value > 0);
             int rangeStart = BaseConsoleActions.AskForValidIntegerInput("Начальное значение диапазона значений коллекции: ");

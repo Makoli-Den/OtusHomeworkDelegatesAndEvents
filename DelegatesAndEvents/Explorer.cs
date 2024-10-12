@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-
-namespace DelegatesAndEvents
+﻿namespace DelegatesAndEvents
 {
     internal class Explorer
     {
@@ -15,7 +12,6 @@ namespace DelegatesAndEvents
                 return;
             }
 
-            // Поиск файлов
             var files = Directory.GetFiles(directory);
             foreach (var file in files)
             {
@@ -29,11 +25,10 @@ namespace DelegatesAndEvents
                 }
             }
 
-            // Поиск папок
             var directories = Directory.GetDirectories(directory);
             foreach (var folder in directories)
             {
-                var args = new ExplorerArgs(folder, false);
+                var args = new ExplorerArgs(folder, false, true);
                 ItemFound(args);
 
                 if (args.Cancel)
@@ -48,12 +43,10 @@ namespace DelegatesAndEvents
         {
             List<string> drives = new List<string>();
 
-            // Получаем все доступные диски
             DriveInfo[] allDrives = DriveInfo.GetDrives();
 
             foreach (var drive in allDrives)
             {
-                // Проверяем, что диск доступен
                 if (drive.IsReady)
                 {
                     drives.Add(drive.Name);
@@ -63,15 +56,14 @@ namespace DelegatesAndEvents
             return drives;
         }
 
-        // Новый метод для поиска дисков
         public void SearchDrives()
         {
             var drives = DriveInfo.GetDrives();
             foreach (var drive in drives)
             {
-                if (drive.IsReady) // Проверяем, готов ли диск
+                if (drive.IsReady)
                 {
-                    var args = new ExplorerArgs(drive.Name, false, false, true); // Диск рассматриваем как папку
+                    var args = new ExplorerArgs(drive.Name, false, false, true);
                     ItemFound(args);
                 }
             }
